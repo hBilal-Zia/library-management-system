@@ -1,5 +1,5 @@
 const { User, Genre, Book } = require('../models')
-const { apiSuccessResponse, apiFailedResponse } = require('../utils/responseTemplate')
+const { apiSuccessResponse, apiFailedResponse } = require('../utils/responseTempelate')
 const { checkValidation } = require('../utils/validators')
 const { isGenreExists } = require('../utils/global')
 const { getSocketIO } = require('../socket')

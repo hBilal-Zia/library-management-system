@@ -1,6 +1,6 @@
 require('dotenv').config()
 const jwt = require('jsonwebtoken')
-const { apiFailedResponse } = require('../utils/responseTemplate')
+const { apiFailedResponse } = require('../utils/responseTempelate')
 const { Model } = require('sequelize')
 
 

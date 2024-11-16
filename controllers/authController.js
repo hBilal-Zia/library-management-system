@@ -1,5 +1,5 @@
 const { User, Genre } = require('../models')
-const { apiSuccessResponse, apiFailedResponse } = require('../utils/responseTemplate')
+const { apiSuccessResponse, apiFailedResponse } = require('../utils/responseTempelate')
 const { checkValidation } = require('../utils/validators')
 const bcrypt = require('bcryptjs')
 const { generateAccessToken, generateRefreshToken } = require('../utils/tokenUtil')

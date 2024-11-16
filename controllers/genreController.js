@@ -1,5 +1,5 @@
 const { Genre } = require('../models');
-const { apiFailedResponse, apiSuccessResponse } = require('../utils/responseTemplate');
+const { apiFailedResponse, apiSuccessResponse } = require('../utils/responseTempelate');
 const { checkValidation } = require('../utils/validators');
 
 const getGenres = async (req, res) => {
