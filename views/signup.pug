@@ -1,0 +1,70 @@
+doctype html
+html
+  head
+    title User Signup
+    script(src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js")
+    script.
+      document.addEventListener('DOMContentLoaded', () => {
+        const signupForm = document.getElementById('signupForm')
+        const genreSelect = document.getElementById('genreId')
+
+        // Fetch genres from the API and populate the select dropdown
+        axios.get('/api/genres/')
+          .then(response => {
+            const genres = response.data.data // Adjust if your API response structure is different
+            genres.forEach(genre => {
+              const option = document.createElement('option')
+              option.value = genre.id
+              option.textContent = genre.name
+              genreSelect.appendChild(option)
+            })
+          })
+          .catch(error => {
+            console.error('Error fetching genres:', error)
+            alert('Failed to load genres')
+          })
+
+        // Handle form submission
+        signupForm.addEventListener('submit', async (e) => {
+          e.preventDefault()
+          const name = document.getElementById('name').value
+          const email = document.getElementById('email').value
+          const password = document.getElementById('password').value
+          const genreId = document.getElementById('genreId').value
+
+          try {
+            const response = await axios.post('/api/auth/sign-up', {
+              name,
+              email,
+              password,
+              genreId
+            })
+
+            alert(response.data.message)  // Notify user of successful signup
+            window.location.href = '/login'  // Redirect to login page after success
+          } catch (error) {
+            alert(error.response.data.message || 'Signup failed')
+          }
+        })
+      })
+  body
+    h1 Signup
+    form#signupForm
+      label(for="name") Name:
+      input#name(type="text" name="name" required)
+      br
+
+      label(for="email") Email:
+      input#email(type="email" name="email" required)
+      br
+
+      label(for="password") Password:
+      input#password(type="password" name="password" required)
+      br
+
+      label(for="genreId") Genre:
+      select#genreId(name="genreId" required)
+        option(value="" disabled selected) Select a genre
+      br
+
+      button(type="submit") Sign Up

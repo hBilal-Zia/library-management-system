@@ -1,0 +1,215 @@
+doctype html
+html
+  head
+    title Book Details
+    script(src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js")
+    script(src="https://cdn.socket.io/4.0.0/socket.io.min.js")
+    script(src="/js/main.js") // External WebSocket script
+  body
+    div#notification-bar(style="display: none; position: fixed; top: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 10px;")
+
+    script.
+      document.addEventListener('DOMContentLoaded', async () => {
+        const bookId = window.location.pathname.split('/').pop(); // Get book ID from URL
+        const token = localStorage.getItem('accessToken'); // Assuming token is stored in localStorage
+        let userId;
+        const accessToken = localStorage.getItem('accessToken')
+        //- console.log('access token ' + accessToken)
+        
+        if (!accessToken) {
+          //- alert('You need to log in first.')
+          window.location.href = '/login'
+          return
+        }
+
+        try {
+          // Fetch user information
+          const userResponse = await axios.get('/api/users/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          userId = userResponse.data.data.id;
+
+          const socket = initializeSocket(userResponse.data.data, accessToken); // Using the external socket script
+
+
+          // Fetch book details
+          const bookResponse = await axios.get(`/api/books/${bookId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const book = bookResponse.data.data;
+
+          document.getElementById('title').value = book.title;
+          document.getElementById('author').value = book.author;
+
+          // Fetch genres and populate dropdown
+          const genreSelect = document.getElementById('genre');
+          const genreResponse = await axios.get('/api/genres', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const genres = genreResponse.data.data;
+
+          genres.forEach(g => {
+            const option = document.createElement('option');
+            option.value = g.id;
+            option.text = g.name;
+            if (g.id === book.genre.id) option.selected = true; // Set the current genre as selected
+            genreSelect.add(option);
+          });
+
+          // Determine if user can borrow or return book
+          const borrowBtn = document.getElementById('borrowBtn');
+          const returnBtn = document.getElementById('returnBtn');
+          if (!book.is_avialable){
+            if(book.issued_to === userId){
+              borrowBtn.style.display = 'none';
+              returnBtn.style.display = 'block';
+              console.log('id equal block')
+            }
+            if(book.issued_to !== userId){
+              borrowBtn.style.display = 'block';
+              returnBtn.style.display = 'none';
+              console.log('id not equal block')
+            }
+          }
+          else{
+            borrowBtn.style.display = 'block';
+            returnBtn.style.display = 'none';
+            console.log('not available block')
+          } 
+            
+          //- }
+          //- if (book.issued_to != userId){ 
+           
+          //- }
+          //-  else {
+          //-   borrowBtn.style.display = 'block';
+          //-   returnBtn.style.display = 'none';
+          //- }
+
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          alert('Failed to load book details or genres.');
+        }
+
+        // Update book details
+        document.getElementById('updateBtn').addEventListener('click', async () => {
+          try {
+            const updatedBook = {
+              title: document.getElementById('title').value,
+              author: document.getElementById('author').value,
+              genre_id: document.getElementById('genre').value,
+            };
+
+            await axios.put(`/api/books/${bookId}`, updatedBook, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            alert('Book updated successfully');
+            window.location.reload(); // Reload page to reflect changes
+          } catch (error) {
+            console.error('Error updating book:', error);
+            alert('Failed to update book.');
+          }
+        });
+
+        // Borrow book
+        document.getElementById('borrowBtn').addEventListener('click', async () => {
+          try {
+              const response = await axios.post('/api/books/issue', { user_id: userId, bookId }, {
+                headers: { Authorization: `Bearer ${token}` }
+          });
+
+          // Check if the request was successful
+          if (response.status === 200) {
+            alert(response.data.message || 'Book borrowed successfully');
+            window.location.reload(); // Reload to reflect borrowed status
+        } else {
+            //- alert('Failed to borrow book.');
+        }
+          } catch (error) {
+        // Handle errors more specifically based on server response
+          if (error.response) {
+            const { status, data } = error.response;
+            if (status === 404) {
+                //- alert(data.message || 'Book or user not found');
+            } else if (status === 500) {
+                //- alert(data.message || 'Server error. Please try again later.');
+            } else {
+                //- alert('Failed to borrow book.');
+            }
+        } else {
+            console.error('Network or other error:', error);
+            //- alert('Failed to borrow book. Please check your network connection.');
+        }
+          }
+          });
+
+        // Return book
+        document.getElementById('returnBtn').addEventListener('click', async () => {
+          try {
+            const response = await axios.post('/api/books/return', { user_id: userId, bookId }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          // Check if the request was successful
+          if (response.status === 200) {
+              alert(response.data.message || 'Book returned successfully');
+              window.location.reload(); // Reload to reflect returned status
+          } else {
+              //- alert('Failed to return book.');
+          }
+          } catch (error) {
+          // Handle errors more specifically based on server response
+          if (error.response) {
+            const { status, data } = error.response;
+            if (status === 404) {
+                //- alert(data.message || 'Book or user not found');
+            } else if (status === 500) {
+                alert(data.message || 'Server error. Please try again later.');
+            } else {
+                alert('Failed to return book.');
+            }
+        } else {
+            console.error('Network or other error:', error);
+            //- alert('Failed to return book. Please check your network connection.');
+        }
+        }
+        });
+
+        // Delete book
+        document.getElementById('deleteBtn').addEventListener('click', async () => {
+          if (!confirm('Are you sure you want to delete this book?')) return;
+          try {
+            await axios.delete(`/api/books/${bookId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            alert('Book deleted successfully');
+            window.location.href = '/home'; // Redirect to home page after deletion
+          } catch (error) {
+            console.error('Error deleting book:', error);
+            alert('Failed to delete book.');
+          }
+        });
+      });
+
+  body
+    h1 Book Details
+
+    form
+      label(for="title") Title:
+      input#title(type="text", name="title")
+
+      label(for="author") Author:
+      input#author(type="text", name="author")
+
+      label(for="genre") Genre:
+      select#genre(name="genre")
+        option(value="") Select a genre
+
+      button#updateBtn(type="button") Update Book
+      button#deleteBtn(type="button") Delete Book
+
+      // Borrow and return buttons
+      button#borrowBtn(type="button", style="display:none") Borrow Book
+      button#returnBtn(type="button", style="display:none") Return Book
+
+    a(href="/home") Back to Home

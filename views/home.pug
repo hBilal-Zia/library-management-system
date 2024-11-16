@@ -1,0 +1,80 @@
+doctype html
+html
+  head
+    title Library - Home
+    script(src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js")
+    script(src="https://cdn.socket.io/4.0.0/socket.io.min.js")
+    script(src="/js/main.js") // External WebSocket script
+  body
+    div#notification-bar(style="display: none; position: fixed; top: 0; width: 100%; background: #333; color: #fff; text-align: center; padding: 10px;")
+    //- Optional: link to custom stylesheet
+    //- link(rel="stylesheet" href="/styles.css")
+
+    script.
+      // JavaScript to fetch books and borrowed books
+      document.addEventListener('DOMContentLoaded', async () => {
+        //- const accessToken = localStorage.getItem('accessToken');
+        const accessToken = localStorage.getItem('accessToken')
+        //- console.log('access token ' + accessToken)
+        
+        if (!accessToken) {
+          //- alert('You need to log in first.')
+          window.location.href = '/login'
+          return
+        }
+        try {
+          // Fetch user information
+          let response = await axios.get('/api/users/me', {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          const user = response.data.data;
+
+          // Initialize WebSocket connection
+          const socket = initializeSocket(user, accessToken); // Using the external socket script
+
+          // Fetch and display all books
+          response = await axios.get('/api/books', {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          const books = response.data.data;
+          displayBooksList(books, 'booksList');
+
+          // Display user's borrowed books
+          const borrowedBooks = user.issuedTo;
+          displayBooksList(borrowedBooks, 'borrowedBooksList');
+          
+        } catch (error) {
+          console.error('Error fetching data:', error);
+          alert('Failed to load data.');
+        }
+      });
+
+      // Function to display books in a specified list
+      function displayBooksList(books, listId) {
+        const listElement = document.getElementById(listId);
+        listElement.innerHTML = ''; // Clear previous items
+        books.forEach(book => {
+          const listItem = document.createElement('li');
+          listItem.innerHTML = `<a href="/books/${book.id}">${book.title}</a>`;
+          listElement.appendChild(listItem);
+        });
+      }
+
+  body
+    h1 Library Home
+    h2 All Books
+    ul#booksList
+      li Loading books...
+
+    h2 Borrowed Books
+    ul#borrowedBooksList
+      li Loading borrowed books...
+
+    footer
+      p © 2024 Library Management System
