@@ -29,7 +29,9 @@ html
           });
           userId = userResponse.data.data.id;
 
-          const socket = initializeSocket(userResponse.data.data, accessToken); // Using the external socket script
+          //- const socket = initializeSocket(userResponse.data.data, accessToken); // Using the external socket script
+          const socket = new WebSocketManager(); // Using the external socket script
+          socket.initialize(userResponse.data.data, accessToken)
 
 
           // Fetch book details

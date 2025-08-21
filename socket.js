@@ -26,7 +26,7 @@ function setupSocket(server) {
 
         // Handle disconnection
         socket.on('disconnect', () => {
-            removeUser(socket.id);
+            // removeUser(socket.id);
             console.log('Updated Connected Users:', getAllConnectedUsers());
         });
     });

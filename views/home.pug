@@ -31,10 +31,12 @@ html
             }
           });
           const user = response.data.data;
+          console.log('user')
+          console.log(user)
 
           // Initialize WebSocket connection
-          const socket = initializeSocket(user, accessToken); // Using the external socket script
-
+          const socket = new WebSocketManager(); // Using the external socket script
+          socket.initialize(user, accessToken)
           // Fetch and display all books
           response = await axios.get('/api/books', {
             headers: {

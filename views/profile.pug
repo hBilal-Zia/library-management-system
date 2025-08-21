@@ -29,7 +29,9 @@ html
           })
 
           const user = response.data.data  // Adjust based on your response structure
-          const socket = initializeSocket(user, accessToken); // Using the external socket script
+          //- const socket = initializeSocket(user, accessToken); // Using the external socket script
+          const socket = new WebSocketManager(); // Using the external socket script
+          socket.initialize(user, accessToken)
           // Populate user details on the page
           document.getElementById('userName').textContent = user.name
           document.getElementById('userEmail').textContent = user.email
